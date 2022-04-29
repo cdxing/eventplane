@@ -20,10 +20,10 @@ void analyzePico(const Char_t *inputFile="test.list", char *outputFile="test",st
 	loadSharedLibraries();
 	//cout<<"test 0 "<<endl;
 
-        //gSystem->Load("StRefMultCorr");
 	//gSystem->ResetSignals();
 	gSystem->Load("ConstManager");
   	gSystem->Load("ConfigReader");
+        gSystem->Load("StRefMultCorr");
 	gSystem->Load("StPicoEvent");
 	gSystem->Load("StPicoDstMaker");
         gSystem->Load("StEpdUtil");

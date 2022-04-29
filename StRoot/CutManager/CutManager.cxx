@@ -64,7 +64,7 @@ bool CutManager::passEventCut(StPicoDst *pico)
     //std::cout<< "event cut test 2 "<<std::endl;
     //if(event->btofTrayMultiplicity()<2)return kFALSE;
     // vr cut
-    if(sqrt(vx*vx+(vy+2)*(vy+2)) > mConfigs.r_vtx)
+    if(sqrt(vx*vx+vy*vy) > mConfigs.r_vtx)
     {
         return kFALSE;
     }

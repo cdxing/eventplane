@@ -33,11 +33,11 @@
 #include "StMessMgr.h"
 #include <algorithm>
 #include <array>
-//#include "StRoot/StRefMultCorr/StRefMultCorr.h"
-//#include "StRoot/StRefMultCorr/CentralityMaker.h"
+#include "StRoot/StRefMultCorr/StRefMultCorr.h"
+#include "StRoot/StRefMultCorr/CentralityMaker.h"
 ClassImp(EventPlane)
 
-    //StRefMultCorr* EventPlane::mRefMultCorr = NULL;
+    StRefMultCorr* EventPlane::mRefMultCorr = NULL;
     //-----------------------------------------------------------------------------
     EventPlane::EventPlane(const char* name, StPicoDstMaker *picoMaker, char* jobid, std::string configFileName)
 : StMaker(name)
@@ -57,14 +57,14 @@ EventPlane::~EventPlane()
 //----------------------------------------------------------------------------- 
 Int_t EventPlane::Init() 
 {
-    //if(!mRefMultCorr)
-    //{
-    //    mRefMultCorr = CentralityMaker::instance()->getRefMultCorr();
-    //}
+    if(!mRefMultCorr)
+    {
+        mRefMultCorr = CentralityMaker::instance()->getRefMultCorr();
+    }
     // qapid
     mCutManager = new CutManager(configs);
-    mHistManager = new HistManager();
-    mHistManager->InitQAPID();
+    //mHistManager = new HistManager();
+    //mHistManager->InitQAPID();
 
     // eventplane 
     // EPD
@@ -88,7 +88,7 @@ Int_t EventPlane::Finish()
     if(mOutPut_EP != "")
     {
         mFile_EP->cd();
-        mHistManager->WriteQAPID();
+        //mHistManager->WriteQAPID();
         mEpProManager->WriteEP();
         mFile_EP->Close();
     }
@@ -127,7 +127,7 @@ Int_t EventPlane::Make()
     {
         StPicoTrack *track = (StPicoTrack*)mPicoDst->track(i);
         if(!track->isPrimary()) continue; // Only Primary Tracks
-        mHistManager->FillTrackQA(track,(TVector3)mPicoEvent->primaryVertex());
+        //mHistManager->FillTrackQA(track,(TVector3)mPicoEvent->primaryVertex());
         //StPicoPhysicalHelix helix = track->helix(mField);
         //Float_t dca = helix.geometricSignedDistance(mVertexPos);
 	TrkMult ++;
@@ -136,51 +136,61 @@ Int_t EventPlane::Make()
     // RefMult
     Int_t runId = mPicoEvent->runId();
 
-    //cout << "runID = " << runId << endl;
     Int_t refMult = mPicoEvent->refMult();
-    //Float_t vz = mPicoEvent->primaryVertex().Z();
+    Float_t vz = mPicoEvent->primaryVertex().Z();
     //Float_t vx = mPicoEvent->primaryVertex().X();
     //Float_t vy = mPicoEvent->primaryVertex().Y();
 
     //Float_t vzvpd = mPicoEvent->vzVpd();
     Int_t TOF_Mul = mPicoEvent->btofTrayMultiplicity();
     //Int_t nMatchedToF = mPicoEvent->nBTOFMatch();
-    //Float_t zdcX = mPicoEvent->ZDCx();
+    Float_t zdcX = mPicoEvent->ZDCx();
     
-    mHistManager->FillEventQA(mPicoEvent->primaryVertex(),refMult,TOF_Mul,TrkMult);
-    mHistManager->FillEventCut(0);
+    //mHistManager->FillEventQA(mPicoEvent->primaryVertex(),refMult,TOF_Mul,TrkMult);
+    //mHistManager->FillEventCut(0);
 
     // runIndex
     const int runIndex = GetRunIndex(runId);
     // event plane IClasses
     //Start with clean events
     IEvent * theEvent = new IEvent;   
+    IEvent * theEvent_wt = new IEvent;   
+    IEvent * theEvent_tpc = new IEvent;   
     IEvent subEvents[_numSubEvents];
+    IEvent subEvents_wt[_numSubEvents];
+    IEvent subEvents_tpc[_numSubEvents];
     theEvent->ClearEvent();
+    theEvent_wt->ClearEvent();
+    theEvent_tpc->ClearEvent();
     for (int i = 0; i < _numSubEvents; i++)
     {
     	subEvents[i].ClearEvent();
+    	subEvents_wt[i].ClearEvent();
+    	subEvents_tpc[i].ClearEvent();
     }	
 
     // Event Cut
     if(mCutManager->passEventCut(mPicoDst)) // event cut
     {
 	
-        mHistManager->FillEventQaCut(mPicoEvent->primaryVertex(),refMult,TOF_Mul,TrkMult);
-        mHistManager->FillEventCut(1);
-        //mRefMultCorr->init(runId);
-        //mRefMultCorr->initEvent(refMult, vz, zdcX);
-        //const Int_t cent9 = mRefMultCorr->getCentralityBin9();
+        //mHistManager->FillEventQaCut(mPicoEvent->primaryVertex(),refMult,TOF_Mul,TrkMult);
+        //mHistManager->FillEventCut(1);
+        mRefMultCorr->init(runId);
+        mRefMultCorr->initEvent(refMult, vz, zdcX);
+        const Int_t cent16 = mRefMultCorr->getCentralityBin16();
+        const Int_t cent9 = mRefMultCorr->getCentralityBin9();
         //const Double_t reweight = mRefMultCorr->getWeight();
 	//std::cout << "refMult: " << refMult << std::endl;
 	//std::cout << "TrkMult: " << TrkMult << std::endl;
-        const int cent16 = mCutManager->getCentrality(TrkMult);
+        //const int cent16 = mCutManager->getCentrality(TrkMult);
 	
 	//std::cout << "cent16: " << cent16 << std::endl;
+	//std::cout << "cent9: " << cent9 << std::endl;
         //const double reweight = 1.0;
-        if(cent16 >  15 || cent16 < 0) return 0;
-        mHistManager->FillEventCent(cent16);
-        mHistManager->FillEventCut(2);
+        //if(cent16 >  15 || cent16 < 0) return 0;
+        if(cent9 > 8  || cent9 < 0) return 0;
+        //mHistManager->FillEventCent(cent9);
+        //mHistManager->FillEventCut(2);
 	
 	/// qapid
         //const Int_t nToFMatched = mCutManager->getMatchedToF();
@@ -198,16 +208,16 @@ Int_t EventPlane::Make()
         {
             StPicoTrack *track = (StPicoTrack*)mPicoDst->track(i);
             if(!track->isPrimary()) continue; // Only Primary Tracks
-            mHistManager->FillTrackCut(0);
+            //mHistManager->FillTrackCut(0);
             if(!mCutManager->passTrackBasic(track)) continue;
-            mHistManager->FillTrackCut(1);
-            mHistManager->FillTrackPhysics(track );
+            //mHistManager->FillTrackCut(1);
+            //mHistManager->FillTrackPhysics(track );
 		
             //StPicoPhysicalHelix helix = track->helix(mField);
             //Float_t dca = helix.geometricSignedDistance(mVertexPos);
             //Short_t  s_charge = track->charge();
             Float_t dca=track->gDCA(mVertexPos).Mag();
-	    if(mCutManager->isTofTrack(mPicoDst,track)) mHistManager->FillTrackTof(mPicoDst,track);
+	    //if(mCutManager->isTofTrack(mPicoDst,track)) mHistManager->FillTrackTof(mPicoDst,track);
 	    /*if(mCutManager->isProton(track))
 	    {
 	   	mHistManager->FillProton(mPicoDst,track,configs.y_mid); 
@@ -233,7 +243,7 @@ Int_t EventPlane::Make()
 	    Double_t pt = track->pMom().Perp();
 	    IEventPlane eventPlane(phi, pt);
 	    eventPlane.SetEta(eta);
-	    theEvent->AddEPParticle(eventPlane);
+	    theEvent_tpc->AddEPParticle(eventPlane);
             /*if(eta > -2.0 && eta < -1.1)    // sub event A eta(-2,-1.25)   // mid-rapidity is 1.06  -2.0-1.4, -1.05-0.65
             {
 	   	mEpProManager->FillTpcAQvec(cent16,runIndex, track); 
@@ -267,12 +277,17 @@ Int_t EventPlane::Make()
             int iring = epdHit->row() -1;//(1~16)-1 -> 0-15
 
             if( !epdHit) continue;
+            if( !epdHit->isGood())
+	    { 
+            	std::cout << "note good epd hit "  << std::endl;
+		    continue;
+	    }
             int position = epdHit->position();
             int ringgroup = mEpdEpInfo->RingGroup(iring);   //0: 0-7, 1: 8-15    0-> inner mose
             //std::cout << "ringgroup = " << ringgroup << std::endl;
             if(ringgroup == -1) continue;
             //std::cout << "epdHit id = " << epdHit->id() << std::endl;
-            if(epdHit->id() > 0 ) continue; // only East side for FXT 
+            //if(epdHit->id() > 0 ) continue; // only East side for FXT 
 
             StraightLine_center = mEpdGeom->TileCenter(epdHit->id())        - mPicoEvent->primaryVertex();  // the collision is from midille to side of the TPC
             StraightLine_random = mEpdGeom->RandomPointOnTile(epdHit->id()) - mPicoEvent->primaryVertex();
@@ -289,10 +304,17 @@ Int_t EventPlane::Make()
             //std::cout << "tileweight  = " << TileWeight << std::endl;
 
 	    mEpProManager->FillEpdMip(eta_epd_center,position,TileWeight);
+	    Double_t eta_wt = mEpProManager->GetEtaWeight(cent9,eta_epd_center);
+	    //std::cout<< "centrality : "<< cent9 << "eta: " << eta_epd_center << "eta weight: " << eta_wt << std::endl;
 
 	    IEventPlane eventPlane(phi_epd_center, TileWeight);
-	    eventPlane.SetTileID(epdHit->id());
+	    IEventPlane eventPlane_wt(phi_epd_center, TileWeight*eta_wt);
+	    //eventPlane.SetTileID(epdHit->id());
+	    //std::cout << eta_epd_center << std::endl;
+	    eventPlane.SetEta(eta_epd_center);
+	    eventPlane_wt.SetEta(eta_epd_center);
 	    theEvent->AddEPParticle(eventPlane);
+	    theEvent_wt->AddEPParticle(eventPlane_wt);
             /*for(int i=0; i<4; i++){
                 if(i == ringgroup){
                     Qx_EPD[i] += TileWeight * cos(1.0*phi_epd_center);
@@ -334,24 +356,45 @@ Int_t EventPlane::Make()
 	{
 	  //subEvents[sub] = theEvent->GetSubEvent(subEventModes[sub], subEventParams[sub][0] - COMrapidity, subEventParams[sub][1] - COMrapidity);
 	  subEvents[sub] = theEvent->GetSubEvent(_subEventModes[sub], _subEventParams[sub][0], _subEventParams[sub][1]);
+	  subEvents_wt[sub] = theEvent_wt->GetSubEvent(_subEventModes[sub], _subEventParams[sub][0], _subEventParams[sub][1]);
+	  subEvents_tpc[sub] = theEvent_tpc->GetSubEvent(_subEventModes[sub], _subEventParams_tpc[sub][0], _subEventParams_tpc[sub][1]);
 	}
+	//std::cout << "Size of wt TPC-East sub EP = " << subEvents_tpc[0].GetEPParticles().size() << std::endl;
+	//std::cout << "Size of wt TPC-West sub EP = " << subEvents_tpc[1].GetEPParticles().size() << std::endl;
 	//std::cout << "Size of  EPD-C sub EP = " << subEvents[0].GetEPParticles().size() << std::endl;
 	//std::cout << "Size of  TPC-A sub EP = " << subEvents[1].GetEPParticles().size() << std::endl;
 	//std::cout << "Size of  TPC-B sub EP = " << subEvents[2].GetEPParticles().size() << std::endl << std::endl;
 	if (subEvents[0].GetEPParticles().size() < 2
-	|| subEvents[1].GetEPParticles().size() < 2
-	|| subEvents[2].GetEPParticles().size() < 2)
+	//|| subEvents[1].GetEPParticles().size() < 2
+	|| subEvents[1].GetEPParticles().size() < 2)
 		{return 0;}	
 	
 	float subQx[_numSubEvents];
 	float subQy[_numSubEvents];
+	float subQx_wt[_numSubEvents];
+	float subQy_wt[_numSubEvents];
+	float subQx_tpc[_numSubEvents];
+	float subQy_tpc[_numSubEvents];
+	mEpProManager->FillPsiRawSubs(subEvents[0].GetEventPsi(1),subEvents[1].GetEventPsi(1));
+	mEpProManager->FillPsiRawSubs_wt(subEvents_wt[0].GetEventPsi(1),subEvents_wt[1].GetEventPsi(1));
+	mEpProManager->FillPsiRawSubs_tpc(subEvents_tpc[0].GetEventPsi(2),subEvents_tpc[1].GetEventPsi(2));
+	mEpProManager->FillPsiRawFull(theEvent->GetEventPsi(1));
+	mEpProManager->FillPsiRawFull_wt(theEvent_wt->GetEventPsi(1));
+	mEpProManager->FillPsiRawFull_tpc(theEvent_tpc->GetEventPsi(2));
 	for (int sub = 0; sub < _numSubEvents; sub++) // raw event plane, store recenter parameter
 	{
-	  //std::cout<< subEvents[sub].GetEventPsi(1) << std::endl;
 	  mEpProManager->FillPsiRaw(sub, subEvents[sub].GetEventPsi(1));
+	  mEpProManager->FillPsiRaw_wt(sub, subEvents_wt[sub].GetEventPsi(1));
+	  mEpProManager->FillPsiRaw_tpc(sub, subEvents_wt[sub].GetEventPsi(2));
      	  subQx[sub] = subEvents[sub].GetQx(1);
      	  subQy[sub] = subEvents[sub].GetQy(1);
+     	  subQx_wt[sub] = subEvents_wt[sub].GetQx(1);
+     	  subQy_wt[sub] = subEvents_wt[sub].GetQy(1);
+     	  subQx_wt[sub] = subEvents_tpc[sub].GetQx(2);
+     	  subQy_wt[sub] = subEvents_tpc[sub].GetQy(2);
 	  mEpProManager->FillSubEpQvec(sub, cent16, runIndex, subQx[sub], subQy[sub]);
+	  mEpProManager->FillSubEpQvec_wt(sub, cent16, runIndex, subQx_wt[sub], subQy_wt[sub]);
+	  mEpProManager->FillSubEpQvec_tpc(sub, cent16, runIndex, subQx_tpc[sub], subQy_tpc[sub]);
 	
 	} // raw event plane, store recenter parameter
 	

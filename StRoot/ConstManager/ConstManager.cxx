@@ -5,9 +5,9 @@
 ClassImp(ConstManager)
 
 // event cut
-Int_t ConstManager::Ncentralities = 16;
-Int_t ConstManager::CENT_BINS = 16;
-Int_t ConstManager::FIRST_CENT =  16 - ConstManager::CENT_BINS;
+Int_t ConstManager::Ncentralities = 9;
+Int_t ConstManager::CENT_BINS = 9;
+Int_t ConstManager::FIRST_CENT =  9 - ConstManager::CENT_BINS;
 std::map<float,float> ConstManager::mVzMaxMap = ConstManager::createVzMaxMap();
 Float_t ConstManager::mVrMax = 2.0;
 Float_t ConstManager::mVzMax = 70.0;

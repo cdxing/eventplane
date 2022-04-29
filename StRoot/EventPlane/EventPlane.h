@@ -45,7 +45,7 @@ class EventPlane : public StMaker {
         StPicoDst      *mPicoDst;
         StPicoEvent *mPicoEvent;
         CutManager  *mCutManager;
-        HistManager *mHistManager;
+        //HistManager *mHistManager;
 
 	// EPD 
         StEpdGeom *mEpdGeom;
