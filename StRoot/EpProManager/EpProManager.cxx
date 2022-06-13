@@ -92,6 +92,14 @@ void EpProManager::InitEP()
     h_psi1_epd_ABCD_raw_subs = new TH2F(Form("h_psi1_epd_ABCD_raw_subs_%d", 1), "#Psi distribution (raw) #Psi_{1}^{East}  vs. #Psi_{1}^{West} " ,35,-3.5,3.5,35,-3.5,3.5);
     h_psi1_epd_ABCD_raw_wt_subs = new TH2F(Form("h_psi1_epd_ABCD_raw_wt_subs_%d", 1), "#Psi distribution (raw) w/ eta weighting #Psi_{1}^{EPD-East}  vs. #Psi_{1}^{EPD-West} " ,35,-3.5,3.5,35,-3.5,3.5);
     h_psi2_tpc_AB_raw_subs = new TH2F(Form("h_psi2_tpc_AB_raw_subs_%d", 1), "#Psi distribution (raw) #Psi_{2}^{TPC-East}  vs. #Psi_{2}^{TPC-West} " ,35,-3.5,3.5,35,-3.5,3.5);
+    // parameter for recentering for full event planes
+    p_mq1x_epd_ABCD_full = new TProfile2D(Form("p_mq1x_epd_ABCD_full"),"mQx1 for recenter correction full Qx",ConstManager::CENT_BINS, ConstManager::FIRST_CENT, ConstManager::FIRST_CENT + ConstManager::CENT_BINS, nrun, -0.5, -0.5+nrun);
+    p_mq1y_epd_ABCD_full = new TProfile2D(Form("p_mq1y_epd_ABCD_full"),"mQy1 for recenter correction Qy",ConstManager::CENT_BINS, ConstManager::FIRST_CENT, ConstManager::FIRST_CENT + ConstManager::CENT_BINS, nrun, -0.5, -0.5+nrun);
+    p_mq1x_epd_ABCD_wt_full = new TProfile2D(Form("p_mq1x_epd_ABCD_wt_full"),"mQx1 w/ eta weight for recenter correction full Qx",ConstManager::CENT_BINS, ConstManager::FIRST_CENT, ConstManager::FIRST_CENT + ConstManager::CENT_BINS, nrun, -0.5, -0.5+nrun);
+    p_mq1y_epd_ABCD_wt_full = new TProfile2D(Form("p_mq1y_epd_ABCD_wt_full"),"mQy1 w/ eta weight for recenter correction Qy",ConstManager::CENT_BINS, ConstManager::FIRST_CENT, ConstManager::FIRST_CENT + ConstManager::CENT_BINS, nrun, -0.5, -0.5+nrun);
+    p_mq2x_tpc_AB_full = new TProfile2D(Form("p_mq2x_tpc_AB_full"),"mQx2 tpc for recenter correction full Qx",ConstManager::CENT_BINS, ConstManager::FIRST_CENT, ConstManager::FIRST_CENT + ConstManager::CENT_BINS, nrun, -0.5, -0.5+nrun);
+    p_mq2y_tpc_AB_full = new TProfile2D(Form("p_mq2y_tpc_AB_full"),"mQy2 tpc  for recenter correction Qy",ConstManager::CENT_BINS, ConstManager::FIRST_CENT, ConstManager::FIRST_CENT + ConstManager::CENT_BINS, nrun, -0.5, -0.5+nrun);
+
     cout << "End of event plane Histograms" << endl;
 }
 
@@ -219,17 +227,36 @@ void EpProManager::FillSubEpQvec(Int_t isub, Int_t centnumber, Int_t runindex, D
   hQVectorSub[isub]->Fill(qx,qy);
 }
 
+void EpProManager::FillSubEpQvec_full(Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy)
+{
+  p_mq1x_epd_ABCD_full->Fill(centnumber, runindex, qx);
+  p_mq1y_epd_ABCD_full->Fill(centnumber, runindex, qy);
+}
+
 void EpProManager::FillSubEpQvec_wt(Int_t isub, Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy)
 {
   p_mq1x_epd_ABCD_wt_sub[isub]->Fill(centnumber, runindex, qx);
   p_mq1y_epd_ABCD_wt_sub[isub]->Fill(centnumber, runindex, qy);
 }
-    
+
+void EpProManager::FillSubEpQvec_wt_full(Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy)
+{
+  p_mq1x_epd_ABCD_wt_full->Fill(centnumber, runindex, qx);
+  p_mq1y_epd_ABCD_wt_full->Fill(centnumber, runindex, qy);
+}    
+
 void EpProManager::FillSubEpQvec_tpc(Int_t isub, Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy)
 {
   p_mq2x_tpc_AB_sub[isub]->Fill(centnumber, runindex, qx);
   p_mq2y_tpc_AB_sub[isub]->Fill(centnumber, runindex, qy);
 }
+
+void EpProManager::FillSubEpQvec_tpc_full(Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy)
+{
+  p_mq2x_tpc_AB_full->Fill(centnumber, runindex, qx);
+  p_mq2y_tpc_AB_full->Fill(centnumber, runindex, qy);
+}
+
 void EpProManager::FillPsiRaw(Int_t isub, Double_t psi)
 {
   h_psi1_epd_ABCD_raw_sub[isub]->Fill(psi);
@@ -371,16 +398,25 @@ void EpProManager::WriteEP()
     p_mq1x_epd_ABCD_sub[sub]->Write();
     p_mq1y_epd_ABCD_sub[sub]->Write();
   }
+    p_mq1x_epd_ABCD_full->Write();
+    p_mq1y_epd_ABCD_full->Write();
+
   for (int sub = 0; sub < _numSubEvents; sub++) // event plane Psi histograms
   {
     p_mq1x_epd_ABCD_wt_sub[sub]->Write();
     p_mq1y_epd_ABCD_wt_sub[sub]->Write();
   }
+    p_mq1x_epd_ABCD_wt_full->Write();
+    p_mq1y_epd_ABCD_wt_full->Write();
+
   for (int sub = 0; sub < _numSubEvents; sub++) // event plane Psi histograms
   {
     p_mq2x_tpc_AB_sub[sub]->Write();
     p_mq2y_tpc_AB_sub[sub]->Write();
   }
+    p_mq2x_tpc_AB_full->Write();
+    p_mq2y_tpc_AB_full->Write();
+
     /*for(Int_t i = 0; i < 2; i++) // vertex pos/neg
     {
         for(Int_t j = 0; j < 4; j++) // eta_gap

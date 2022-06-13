@@ -177,7 +177,7 @@ Int_t EventPlane::Make()
         //mHistManager->FillEventCut(1);
         mRefMultCorr->init(runId);
         mRefMultCorr->initEvent(refMult, vz, zdcX);
-        const Int_t cent16 = mRefMultCorr->getCentralityBin16();
+        //const Int_t cent16 = mRefMultCorr->getCentralityBin16();
         const Int_t cent9 = mRefMultCorr->getCentralityBin9();
         //const Double_t reweight = mRefMultCorr->getWeight();
 	//std::cout << "refMult: " << refMult << std::endl;
@@ -392,9 +392,9 @@ Int_t EventPlane::Make()
      	  subQy_wt[sub] = subEvents_wt[sub].GetQy(1);
      	  subQx_wt[sub] = subEvents_tpc[sub].GetQx(2);
      	  subQy_wt[sub] = subEvents_tpc[sub].GetQy(2);
-	  mEpProManager->FillSubEpQvec(sub, cent16, runIndex, subQx[sub], subQy[sub]);
-	  mEpProManager->FillSubEpQvec_wt(sub, cent16, runIndex, subQx_wt[sub], subQy_wt[sub]);
-	  mEpProManager->FillSubEpQvec_tpc(sub, cent16, runIndex, subQx_tpc[sub], subQy_tpc[sub]);
+	  mEpProManager->FillSubEpQvec(sub, cent9, runIndex, subQx[sub], subQy[sub]);
+	  mEpProManager->FillSubEpQvec_wt(sub, cent9, runIndex, subQx_wt[sub], subQy_wt[sub]);
+	  mEpProManager->FillSubEpQvec_tpc(sub, cent9, runIndex, subQx_tpc[sub], subQy_tpc[sub]);
 	
 	} // raw event plane, store recenter parameter
 	

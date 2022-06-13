@@ -111,12 +111,17 @@ class EpProManager
     // Event Plane method
     TProfile2D *p_mq1x_epd_ABCD_sub[_numSubEvents];
     TProfile2D *p_mq1y_epd_ABCD_sub[_numSubEvents];
+    TProfile2D *p_mq1x_epd_ABCD_full;
+    TProfile2D *p_mq1y_epd_ABCD_full;
+
     
     TH1F *h_psi1_epd_ABCD_raw_wt_sub[_numSubEvents];
     TH2F *h_psi1_epd_ABCD_raw_wt_subs;
     TH1F *h_psi1_epd_ABCD_raw_wt_full;
     TProfile2D *p_mq1x_epd_ABCD_wt_sub[_numSubEvents];
     TProfile2D *p_mq1y_epd_ABCD_wt_sub[_numSubEvents];
+    TProfile2D *p_mq1x_epd_ABCD_wt_full;
+    TProfile2D *p_mq1y_epd_ABCD_wt_full;
     
     // TPC event plane
     TH1F *h_psi2_tpc_AB_raw_sub[_numSubEvents];
@@ -124,6 +129,9 @@ class EpProManager
     TH1F *h_psi2_tpc_AB_raw_full;
     TProfile2D *p_mq2x_tpc_AB_sub[_numSubEvents];
     TProfile2D *p_mq2y_tpc_AB_sub[_numSubEvents];
+    TProfile2D *p_mq2x_tpc_AB_full;
+    TProfile2D *p_mq2y_tpc_AB_full;
+
     /*TProfile2D *p_mq2y_East_EP[2][4]; // 0 = vertex pos/neg, 1 = eta gap
     TProfile2D *p_mq2x_West_EP[2][4]; // 0 = vertex pos/neg, 1 = eta gap
     TProfile2D *p_mq2y_West_EP[2][4]; // 0 = vertex pos/neg, 1 = eta gap
