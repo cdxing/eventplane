@@ -14,12 +14,22 @@ class TH2F;
 class TH2D;
 
 // sub event plane configurations
-const int _numSubEvents = 3;
-const char _subEventModes[_numSubEvents] = {'r','e','e'};
+const int _numSubEvents = 2;
+const char _subEventModes[_numSubEvents] = {'e','e'};
 const float _subEventParams[_numSubEvents][2] =
-{{9,12}, //EPD-C ring-range
- {-2.0,-1.1}, //TPC-A psuedorapidity
- {-1.0,0}}; //TPC-B psuedorapidity
+{{-5.4,-1.6}, //EPD-East
+ {1.6,5.4}, //EPD-West
+ }; 
+const float _subEventParams_tpc[_numSubEvents][2] =
+{{-1.5,-0.05}, //TPC-East
+ {0.05,1.5}, //TPC-West
+ }; 
+// eta weight from Zuowen's study:
+// https://drupal.star.bnl.gov/STAR/system/files/Directed_Flow_19p6GeV_0.pdf
+const  double _lin[9] = {-2.23911, -2.57653, -2.51053, -2.32201, -1.95298, -1.46519, -0.91108, -0.41001, 0.035437};
+const  double _cub[9] = {0.364133, 0.339185, 0.311601, 0.291423, 0.24892, 0.197276, 0.128563, 0.069993, 0.013928};
+const  double _fif[9] = {-0.01212,  -0.00716,  -0.00465,  -0.0034, -0.00189, -0.00086,  0.000363,  0.000486,  0.00046};
+
 
 class EpProManager
 {
@@ -39,8 +49,19 @@ class EpProManager
     void FillTpcAQvec(Int_t centnumber, Int_t runindex, StPicoTrack *track);
     void FillTpcBQvec(Int_t centnumber, Int_t runindex, StPicoTrack *track);
     void FillSubEpQvec(Int_t isub, Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy);
+    void FillSubEpQvec_wt(Int_t isub, Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy);
+    void FillSubEpQvec_tpc(Int_t isub, Int_t centnumber, Int_t runindex, Double_t qx, Double_t qy);
     
     void FillPsiRaw(Int_t isub, Double_t psi); 
+    void FillPsiRaw_wt(Int_t isub, Double_t psi); 
+    void FillPsiRaw_tpc(Int_t isub, Double_t psi); 
+    void FillPsiRawFull( Double_t psi);
+    void FillPsiRawFull_wt( Double_t psi);
+    void FillPsiRawFull_tpc( Double_t psi);
+    void FillPsiRawSubs(Double_t psi_east, Double_t psi_west);
+    void FillPsiRawSubs_wt(Double_t psi_east, Double_t psi_west);
+    void FillPsiRawSubs_tpc(Double_t psi_east, Double_t psi_west);
+    Double_t GetEtaWeight(Int_t centrality, Double_t eta);
     /*void FillEventEast_EP(TVector2 Psi2Vector, TVector2 Psi3Vector, Int_t Cent9, Int_t RunIndex, Int_t i, Int_t j, Int_t k); // i = vertex pos/neg, j = eta_gap, k = ShiftOrder
     void FillEventWest_EP(TVector2 Psi2Vector, TVector2 Psi3Vector, Int_t Cent9, Int_t RunIndex, Int_t i, Int_t j, Int_t k); // i = vertex pos/neg, j = eta_gap, k = ShiftOrder
     void FillEventFull_EP(TVector2 Psi2Vector, TVector2 Psi3Vector, Int_t Cent9, Int_t RunIndex, Int_t i, Int_t k); // i = vertex pos/neg, k = ShiftOrder*/
@@ -75,8 +96,12 @@ class EpProManager
     TProfile2D *p_TPCqx_B;
     TProfile2D *p_TPCqy_B;
     TString mout_recenter;
+    //eta weight
+    TH2D *v1EtaWt;
     
-    TH1F *hPsiRawSub[_numSubEvents];
+    TH1F *h_psi1_epd_ABCD_raw_sub[_numSubEvents];
+    TH2F *h_psi1_epd_ABCD_raw_subs;
+    TH1F *h_psi1_epd_ABCD_raw_full;
     TH1F *hPsiRecenteredSub[_numSubEvents];	
     TH1F *hPsiShiftedSub[_numSubEvents];	
 
@@ -84,8 +109,28 @@ class EpProManager
     TH1F *hQySub[_numSubEvents];
     TH2F *hQVectorSub[_numSubEvents];
     // Event Plane method
-    TProfile2D *p_mq1x_Sub_EP[_numSubEvents];
-    TProfile2D *p_mq1y_Sub_EP[_numSubEvents];
+    TProfile2D *p_mq1x_epd_ABCD_sub[_numSubEvents];
+    TProfile2D *p_mq1y_epd_ABCD_sub[_numSubEvents];
+    TProfile2D *p_mq1x_epd_ABCD_full;
+    TProfile2D *p_mq1y_epd_ABCD_full;
+
+    
+    TH1F *h_psi1_epd_ABCD_raw_wt_sub[_numSubEvents];
+    TH2F *h_psi1_epd_ABCD_raw_wt_subs;
+    TH1F *h_psi1_epd_ABCD_raw_wt_full;
+    TProfile2D *p_mq1x_epd_ABCD_wt_sub[_numSubEvents];
+    TProfile2D *p_mq1y_epd_ABCD_wt_sub[_numSubEvents];
+    TProfile2D *p_mq1x_epd_ABCD_wt_full;
+    TProfile2D *p_mq1y_epd_ABCD_wt_full;
+    
+    // TPC event plane
+    TH1F *h_psi2_tpc_AB_raw_sub[_numSubEvents];
+    TH2F *h_psi2_tpc_AB_raw_subs;
+    TH1F *h_psi2_tpc_AB_raw_full;
+    TProfile2D *p_mq2x_tpc_AB_sub[_numSubEvents];
+    TProfile2D *p_mq2y_tpc_AB_sub[_numSubEvents];
+    TProfile2D *p_mq2x_tpc_AB_full;
+    TProfile2D *p_mq2y_tpc_AB_full;
 
     /*TProfile2D *p_mq2y_East_EP[2][4]; // 0 = vertex pos/neg, 1 = eta gap
     TProfile2D *p_mq2x_West_EP[2][4]; // 0 = vertex pos/neg, 1 = eta gap
